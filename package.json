@@ -1,0 +1,39 @@
+{
+  "name": "perpl-market-maker-ts-expt",
+  "version": "0.1.0",
+  "description": "Mainnet market maker bot for Perpl perpetual DEX on Monad (using official mainnet contracts)",
+  "type": "module",
+  "main": "dist/index.js",
+  "scripts": {
+    "build": "tsc",
+    "start": "node dist/index.js",
+    "dev": "tsx src/index.ts",
+    "mm": "tsx src/index.ts",
+    "typecheck": "tsc --noEmit",
+    "check-markets": "tsx src/check-markets.ts"
+  },
+  "keywords": [
+    "perpl",
+    "monad",
+    "market-maker",
+    "perpetual",
+    "dex",
+    "mainnet"
+  ],
+  "author": "",
+  "license": "MIT",
+  "dependencies": {
+    "@types/ws": "^8.18.1",
+    "dotenv": "^16.4.5",
+    "viem": "^2.21.0",
+    "ws": "^8.21.0"
+  },
+  "devDependencies": {
+    "@types/node": "^22.10.0",
+    "tsx": "^4.19.0",
+    "typescript": "^5.7.0"
+  },
+  "engines": {
+    "node": ">=20.0.0"
+  }
+}
