@@ -24,3 +24,7 @@ Thumbs.db
 # Misc
 *.tsbuildinfo
 coverage/
+
+# Jupyter / notebooks
+.ipynb_checkpoints/
+*.ipynb
