@@ -1,5 +1,5 @@
 {
-  "name": "perpl-market-maker-ts-expt",
+  "name": "perpl",
   "version": "0.1.0",
   "description": "Mainnet market maker bot for Perpl perpetual DEX on Monad (using official mainnet contracts)",
   "type": "module",

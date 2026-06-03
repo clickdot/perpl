@@ -1,4 +1,4 @@
-# perpl-market-maker-ts-expt
+# perpl
 
 **Pure WebSocket ("one-click trading" style) experimental market maker for Perpl perps on Monad mainnet.**
 
@@ -27,7 +27,7 @@ See the sibling directories in the workspace for the other variants:
 ## Quick start
 
 ```bash
-cd perpl-market-maker-ts-expt
+cd perpl
 npm install
 
 # Copy and edit .env (put your real mainnet key — never commit it)
@@ -37,18 +37,18 @@ cp .env.example .env
 # Dry run first (recommended)
 npm run dev -- --help
 
-# LIVE run (your typical command)
-LIVE=true npm run dev -- --perp 1 --size 0.0002 --spread 0.03 --leverage 10 --max-pos 0.0002 --interval 5
+# LIVE run (example with defaults)
+LIVE=true npm run dev -- --perp 1 --size 0.001 --spread 0.1 --leverage 2 --max-pos 0.01 --interval 30
 ```
 
 Common flags (see `--help` for all):
 
 - `--perp 1` (or btc, 10/mon, etc.)
-- `--size 0.0002`
-- `--spread 0.03` (0.03%)
-- `--leverage 10`
-- `--max-pos 0.0002`
-- `--interval 5`
+- `--size 0.001`
+- `--spread 0.1` (0.1%)
+- `--leverage 2`
+- `--max-pos 0.01`
+- `--interval 30`
 - `--strategy bbo` (currently the "last price centered" strategy; "spread" is the ladder)
 
 Set `LIVE=true` (env) to actually send orders. Without it everything is dry-run.
