@@ -37,18 +37,18 @@ cp .env.example .env
 # Dry run first (recommended)
 npm run dev -- --help
 
-# LIVE run (example with defaults)
-LIVE=true npm run dev -- --perp 1 --size 0.001 --spread 0.1 --leverage 2 --max-pos 0.01 --interval 30
+# LIVE run (all values are picked from .env by default)
+npm run dev
 ```
 
 Common flags (see `--help` for all):
 
 - `--perp 1` (or btc, 10/mon, etc.)
-- `--size 0.001`
-- `--spread 0.1` (0.1%)
+- `--size 10` (USD size)
+- `--spread 1` (1 bps)
 - `--leverage 2`
-- `--max-pos 0.01`
-- `--interval 30`
+- `--max-pos 10` (Max exposure in USD)
+- `--interval 10` (Seconds)
 - `--strategy bbo` (currently the "last price centered" strategy; "spread" is the ladder)
 
 Set `LIVE=true` (env) to actually send orders. Without it everything is dry-run.

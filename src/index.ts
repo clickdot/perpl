@@ -11,14 +11,16 @@ import { loadConfig, resolvePerpId } from "./config.js";
 import { PerplClient } from "./client.js";
 import { PerplMarketMaker, type MMConfig } from "./marketMaker.js";
 
+const env = loadConfig();
+
 const { values } = parseArgs({
   options: {
-    perp: { type: "string", short: "p", default: "1" },
-    size: { type: "string", short: "s", default: "0.001" },
-    spread: { type: "string", default: "0.1" },
-    leverage: { type: "string", short: "l", default: "2" },
-    "max-pos": { type: "string", default: "0.01" },
-    interval: { type: "string", short: "i", default: "30" },
+    perp: { type: "string", short: "p", default: env.defaultPerpId },
+    size: { type: "string", short: "s", default: String(env.defaultSizeUsd) },
+    spread: { type: "string", default: String(env.defaultSpreadBps) },
+    leverage: { type: "string", short: "l", default: String(env.defaultLeverage) },
+    "max-pos": { type: "string", default: String(env.defaultMaxPosUsd) },
+    interval: { type: "string", short: "i", default: String(env.defaultIntervalSec) },
     strategy: { type: "string", default: "bbo" }, // bbo | spread
     orders: { type: "string", short: "n", default: "2" },
     "spread-step": { type: "string", default: "0.2" },
@@ -34,11 +36,11 @@ Perpl Mainnet Market Maker
 
 Options:
   --perp, -p        Market (1/btc, 10/mon, 20/eth, 30/sol or raw id)   [default: 1]
-  --size, -s        Order size in lots per side                        [default: 0.001]
-  --spread          % distance from mark (bbo = half-spread)           [default: 0.1]
-  --leverage, -l    Leverage (e.g. 2)                                  [default: 2]
-  --max-pos         Max abs position (lots) used for price skew calc (always posts both sides now) [default: 0.01]
-  --interval, -i    Re-quote interval seconds                          [default: 30]
+  --size, -s        Order size in USD per side                         [default: from env]
+  --spread          Distance from mark in bps (bbo = half-spread)      [default: from env]
+  --leverage, -l    Leverage (e.g. 2)                                  [default: from env]
+  --max-pos         Max abs position (USD) used for price skew calc    [default: from env]
+  --interval, -i    Re-quote interval seconds                          [default: from env]
   --strategy        bbo | spread                                       [default: bbo]
                           bbo: symmetric around latest traded price using --spread (always both sides)
   --orders, -n      Orders per side (spread only)                      [default: 2]
@@ -55,10 +57,9 @@ Examples:
 }
 
 async function main() {
-  const env = loadConfig();
   const perpId = resolvePerpId(values.perp as string);
   const size = parseFloat(values.size as string);
-  const spreadPct = parseFloat(values.spread as string);
+  const spreadBps = parseFloat(values.spread as string);
   const leverage = parseFloat(values.leverage as string);
   const maxPos = parseFloat(values["max-pos"] as string);
   const intervalSec = parseInt(values.interval as string, 10);
@@ -77,14 +78,14 @@ async function main() {
   console.log(`  Wallet:       ${env.privateKey.slice(0, 6)}...${env.privateKey.slice(-4)}`);
   console.log(`  Perp:         ${perpId}`);
   console.log(`  Strategy:     ${strategy.toUpperCase()}`);
-  console.log(`  Size/side:    ${size} lots`);
-  console.log(`  Spread:       ${spreadPct}%`);
+  console.log(`  Size/side:    $${size}`);
+  console.log(`  Spread:       ${spreadBps} bps`);
   if (strategy === "spread") {
     console.log(`  Orders/side:  ${ordersPerSide}`);
     console.log(`  Step:         ${spreadStep}%`);
   }
   console.log(`  Leverage:     ${leverage}x`);
-  console.log(`  Max Pos:      ${maxPos} lots`);
+  console.log(`  Max Pos:      $${maxPos}`);
   console.log(`  Interval:     ${intervalSec}s`);
   console.log(`  Post-only:    ${postOnly}`);
   console.log(`  Mode:         ${live ? "LIVE" : "DRY-RUN"}`);
@@ -94,10 +95,10 @@ async function main() {
 
   const mmConfig: MMConfig = {
     perpId,
-    orderSizeLots: size,
-    spreadPct,
+    orderSizeUsd: size,
+    spreadBps,
     leverage,
-    maxPositionLots: maxPos,
+    maxPositionUsd: maxPos,
     intervalMs: intervalSec * 1000,
     strategy,
     postOnly,

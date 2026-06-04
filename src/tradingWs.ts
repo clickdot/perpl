@@ -235,7 +235,7 @@ export class TradingWsClient {
     this.stopHeartbeat();
     this.heartbeatInterval = setInterval(() => {
       if (this.ws && this.connected) {
-        this.safeSend({ mt: 1 }); // app-level Ping to keepalive
+        this.safeSend({ mt: 1, t: Date.now() }); // app-level Ping to keepalive
       }
     }, 15000);
   }

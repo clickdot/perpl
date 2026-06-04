@@ -21,10 +21,10 @@ import { MarketDataWsClient } from "./marketDataWs.js";
 
 export interface MMConfig {
   perpId: bigint;
-  orderSizeLots: number; // in human lots (will be scaled by lotDecimals)
-  spreadPct: number; // e.g. 0.1 for 0.1%
+  orderSizeUsd: number;
+  spreadBps: number; // e.g. 1 for 1 bps (0.01%)
   leverage: number;
-  maxPositionLots: number;
+  maxPositionUsd: number;
   intervalMs: number;
   strategy: "bbo" | "spread";
   postOnly: boolean;
@@ -121,7 +121,12 @@ export class PerplMarketMaker {
    * Only the --spread (plus rounding to tick grid) determines the bid/ask price difference.
    */
   calculateQuotes(mark: number, currentPos: number, priceDec: number, lotDec: number): OrderDesc[] {
-    const { orderSizeLots, spreadPct, leverage, maxPositionLots, strategy, postOnly, ordersPerSide = 2, spreadStepPct = 0.2 } = this.cfg;
+    const { orderSizeUsd, spreadBps, leverage, maxPositionUsd, strategy, postOnly, ordersPerSide = 2, spreadStepPct = 0.2 } = this.cfg;
+
+    // Convert USD sizes to lots dynamically based on mark price
+    const orderSizeLots = mark > 0 ? orderSizeUsd / mark : 0;
+    const maxPositionLots = mark > 0 ? maxPositionUsd / mark : 0;
+    const spreadPct = spreadBps / 100;
 
     const halfSpread = mark * (spreadPct / 100 / 2);
     const levHdths = this.leverageToHdths(leverage);
@@ -145,10 +150,10 @@ export class PerplMarketMaker {
       // (For spreads << tick size, effective diff will be governed by the price grid.)
 
       // Respect max-pos for sizes: only post the side that would not increase exposure beyond max.
-      // (prevents position from growing unbounded; when over, only post reducing side to de-risk)
-      // Still posts both when within limits. After a fill that brings pos back, will post both again.
-      const bidSize = currentPos < maxPositionLots ? orderSizeLots : 0;
-      const askSize = currentPos > -maxPositionLots ? orderSizeLots : 0;
+      // We check if filling the order would push us past the max position (using a tiny epsilon for float fuzz).
+      const eps = 1e-6;
+      const bidSize = currentPos + orderSizeLots <= maxPositionLots + eps ? orderSizeLots : 0;
+      const askSize = currentPos - orderSizeLots >= -maxPositionLots - eps ? orderSizeLots : 0;
 
       // Push ask/short first then bid/long; order may affect which get assigned in batch result for some contract states.
       // Always use Open* (never Close*) so that we post resting orders on *both* sides of the book even when we have an open position.
@@ -185,8 +190,9 @@ export class PerplMarketMaker {
         const askP = mark * (1 + offset);
 
         // Respect max-pos for sizes: only post the side that would not increase exposure beyond max.
-        const bidSz = currentPos < maxPositionLots ? orderSizeLots : 0;
-        const askSz = currentPos > -maxPositionLots ? orderSizeLots : 0;
+        const eps = 1e-6;
+        const bidSz = currentPos + orderSizeLots <= maxPositionLots + eps ? orderSizeLots : 0;
+        const askSz = currentPos - orderSizeLots >= -maxPositionLots - eps ? orderSizeLots : 0;
 
         // ask first then bid for consistency with bbo
         if (askSz > 0) {
@@ -373,7 +379,7 @@ export class PerplMarketMaker {
         else if (q.orderType === OrderType.OpenShort) ap = p;
       }
       if (bp || ap) {
-        console.log(`  target quotes: BID ${bp ? bp.toFixed(priceDec) : "-"} / ASK ${ap ? ap.toFixed(priceDec) : "-"}  size=${this.cfg.orderSizeLots} lev=${this.cfg.leverage}x`);
+        console.log(`  target quotes: BID ${bp ? bp.toFixed(priceDec) : "-"} / ASK ${ap ? ap.toFixed(priceDec) : "-"}  size=$${this.cfg.orderSizeUsd} lev=${this.cfg.leverage}x`);
       }
     }
     await this.placeQuotes(quotes);

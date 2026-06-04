@@ -15,6 +15,12 @@ export interface PerplConfig {
   wsUrl: string;           // base for /ws/v1/...
   tradingWsUrl: string;    // full trading endpoint
   chainId: number;
+  defaultPerpId: string;
+  defaultSizeUsd: number;
+  defaultSpreadBps: number;
+  defaultLeverage: number;
+  defaultMaxPosUsd: number;
+  defaultIntervalSec: number;
 }
 
 export const DEFAULTS = {
@@ -47,6 +53,13 @@ export function loadConfig(): PerplConfig {
   // LIVE=true (or LIVE=1) enables real txs. Default = dry run only.
   const live = ["true", "1", "yes"].includes((process.env.LIVE || "").toLowerCase());
 
+  const defaultPerpId = process.env.PERP_ID || "1";
+  const defaultSizeUsd = parseFloat(process.env.ORDER_SIZE_USD || "10");
+  const defaultSpreadBps = parseFloat(process.env.SPREAD_BPS || "1");
+  const defaultLeverage = parseFloat(process.env.LEVERAGE || "2");
+  const defaultMaxPosUsd = parseFloat(process.env.MAX_POS_USD || "10");
+  const defaultIntervalSec = parseInt(process.env.INTERVAL_SEC || "10", 10);
+
   return {
     rpcUrl,
     exchangeAddress,
@@ -57,6 +70,12 @@ export function loadConfig(): PerplConfig {
     wsUrl: wsBase,
     tradingWsUrl,
     chainId,
+    defaultPerpId,
+    defaultSizeUsd,
+    defaultSpreadBps,
+    defaultLeverage,
+    defaultMaxPosUsd,
+    defaultIntervalSec,
   };
 }
 

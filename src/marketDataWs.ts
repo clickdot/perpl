@@ -133,7 +133,7 @@ export class MarketDataWsClient {
     this.heartbeatInterval = setInterval(() => {
       if (this.ws && this.connected) {
         try {
-          this.ws.send(JSON.stringify({ mt: 1 })); // app-level ping
+          this.ws.send(JSON.stringify({ mt: 1, t: Date.now() })); // app-level ping
         } catch {}
       }
     }, 15000);
