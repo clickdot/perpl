@@ -144,25 +144,24 @@ export class TradingWsClient {
         fn();
       };
 
-      const wsForOpen = this.ws;
+      const wsRef = this.ws;
       this.ws.on("open", () => {
         // Send AuthSignIn immediately
-        if (!wsForOpen) return;
+        if (!wsRef) return;
         const msg = {
           mt: 4,
           chain_id: this.config.chainId,
           nonce: this.nonce,
           ses: (crypto as any).randomUUID ? (crypto as any).randomUUID() : "sess-" + Date.now(),
         };
-        wsForOpen.send(JSON.stringify(msg));
+        wsRef.send(JSON.stringify(msg));
         console.log("[WS] Sent AuthSignIn");
         this.startHeartbeat();
       });
 
       // Keepalive: reply to pings (transport)
-      const wsForPing = this.ws;
       this.ws.on("ping", () => {
-        try { if (wsForPing) wsForPing.pong(); } catch {}
+        try { if (this.ws === wsRef) wsRef.pong(); } catch {}
       });
 
       this.ws.on("message", (data) => {
@@ -184,7 +183,14 @@ export class TradingWsClient {
       });
 
       this.ws.on("close", (code: number, reason: Buffer) => {
+        if (this.ws !== wsRef) return; // Stale close event
         console.log(`[WS] closed code=${code} reason=${reason?.toString() || ''}`);
+        
+        // If the server disconnects due to auth expiration (3401), force a fresh REST auth on next reconnect
+        if (code === 3401) {
+          this.nonce = null;
+        }
+
         this.connected = false;
         this.ws = undefined;
         this.stopHeartbeat();
@@ -347,7 +353,7 @@ export class TradingWsClient {
   }
 
   async ensureConnected() {
-    if (this.connected && this.ws && this.accId > 0) return;
+    if (this.connected && this.ws && this.ws.readyState === WebSocket.OPEN && this.accId > 0) return;
     if (!this.shouldReconnect) return;
     if (this.reconnectTimer) {
       clearTimeout(this.reconnectTimer);

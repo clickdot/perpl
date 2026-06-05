@@ -49,6 +49,8 @@ export class PerplMarketMaker {
   private tradingWs?: TradingWsClient;
   private marketDataWs?: MarketDataWsClient;
   private fullConfig?: PerplConfig;
+  private lastQuotedMark: number | null = null;
+  private lastQuotedPos: number | null = null;
 
   constructor(client: PerplClient, mmConfig: MMConfig, live: boolean, fullConfig?: PerplConfig) {
     this.client = client;
